@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
@@ -7,9 +8,11 @@ using DeviceManagerMVC.Application.Dtos;
 using DeviceManagerMVC.Domain.Entities;
 using DeviceManagerMVC.Domain.Enums;
 using DeviceManagerMVC.Domain.Repositories;
+using DeviceManagerMVC.Infrastructure.Security;
 using DeviceManagerMVC.IntegrationTests.Infrastructure.Database;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Time.Testing;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Shouldly;
@@ -32,7 +35,7 @@ public sealed class DevicesControllerTests(SqlServerFixture fixture) : IAsyncLif
     public async Task InitializeAsync()
     {
         await fixture.ResetDevicesAsync();
-        _client = _factory.CreateClient();
+        _client = await _factory.CreateAuthenticatedClientAsync();
     }
 
     public async Task DisposeAsync()
@@ -57,6 +60,56 @@ public sealed class DevicesControllerTests(SqlServerFixture fixture) : IAsyncLif
         problem.ShouldNotBeNull();
         problem.Status.ShouldBe((int)status);
         return problem;
+    }
+
+    private async Task<HttpResponseMessage> GetDevicesWithTokenAsync(string token)
+    {
+        using var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        return await client.GetAsync(Devices);
+    }
+
+    private static string IssueToken(JwtOptions options, DateTimeOffset issuedAt) =>
+        new JwtAccessTokenIssuer(options, new FakeTimeProvider(issuedAt))
+            .Issue(User.Rehydrate(1, "user@example.com", "hash", issuedAt.UtcDateTime))
+            .Token;
+
+    // ---------- Authentication ----------
+
+    [Fact]
+    public async Task Request_without_token_returns_401_problem()
+    {
+        using var anonymous = _factory.CreateClient();
+
+        var response = await anonymous.GetAsync(Devices);
+
+        await ShouldBeProblemAsync(response, HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Request_with_expired_token_returns_401_problem()
+    {
+        // 15-minute token issued an hour ago: past expiry even with the default 5-minute clock skew.
+        var token = IssueToken(DeviceManagerApiFactory.JwtOptions, DateTimeOffset.UtcNow.AddHours(-1));
+
+        var response = await GetDevicesWithTokenAsync(token);
+
+        await ShouldBeProblemAsync(response, HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Request_with_token_signed_by_another_key_returns_401_problem()
+    {
+        var forged = new JwtOptions
+        {
+            Issuer = DeviceManagerApiFactory.JwtOptions.Issuer,
+            Audience = DeviceManagerApiFactory.JwtOptions.Audience,
+            SigningKey = "attacker-signing-key-that-is-also-32-bytes-long"
+        };
+
+        var response = await GetDevicesWithTokenAsync(IssueToken(forged, DateTimeOffset.UtcNow));
+
+        await ShouldBeProblemAsync(response, HttpStatusCode.Unauthorized);
     }
 
     // ---------- POST ----------
@@ -280,7 +333,7 @@ public sealed class DevicesControllerTests(SqlServerFixture fixture) : IAsyncLif
         {
             ConfigureServices = services => services.AddScoped(_ => repository)
         };
-        using var client = factory.CreateClient();
+        using var client = await factory.CreateAuthenticatedClientAsync();
 
         var response = await client.GetAsync($"{Devices}/1");
 
