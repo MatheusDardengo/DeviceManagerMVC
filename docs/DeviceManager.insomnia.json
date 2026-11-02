@@ -1,0 +1,214 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-11-02T00:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v2023.5.8",
+  "resources": [
+    {
+      "_id": "wrk_device_manager",
+      "_type": "workspace",
+      "parentId": null,
+      "name": "Device Manager API",
+      "description": "Run the API with the https profile first. Login once; device requests reuse its token (re-login is automatic after 14 minutes).",
+      "scope": "collection"
+    },
+    {
+      "_id": "env_base",
+      "_type": "environment",
+      "parentId": "wrk_device_manager",
+      "name": "Base Environment",
+      "data": {
+        "base_url": "https://localhost:7174",
+        "email": "demo@example.com",
+        "password": "Passw0rd!",
+        "device_id": 1,
+        "token": "{% response 'body', 'req_auth_login', 'b64::JC5hY2Nlc3NUb2tlbg==::46b', 'when-expired', 840 %}"
+      }
+    },
+    {
+      "_id": "jar_device_manager",
+      "_type": "cookie_jar",
+      "parentId": "wrk_device_manager",
+      "name": "Default Jar",
+      "cookies": []
+    },
+    {
+      "_id": "fld_auth",
+      "_type": "request_group",
+      "parentId": "wrk_device_manager",
+      "name": "Auth",
+      "environment": {},
+      "metaSortKey": -100
+    },
+    {
+      "_id": "fld_devices",
+      "_type": "request_group",
+      "parentId": "wrk_device_manager",
+      "name": "Devices",
+      "environment": {},
+      "metaSortKey": -90
+    },
+    {
+      "_id": "req_auth_register",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Register",
+      "description": "201 with the user. 400 for short password (< 8) or invalid email, 409 if the email exists.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/auth/register",
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"{{ _.email }}\",\n  \"password\": \"{{ _.password }}\"\n}"
+      },
+      "authentication": {},
+      "metaSortKey": -100
+    },
+    {
+      "_id": "req_auth_login",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Login",
+      "description": "200 with the access token in the body; the refresh token arrives as an HttpOnly cookie (see the Cookies tab). 401 for wrong credentials.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/auth/login",
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"{{ _.email }}\",\n  \"password\": \"{{ _.password }}\"\n}"
+      },
+      "authentication": {},
+      "metaSortKey": -90
+    },
+    {
+      "_id": "req_auth_refresh",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Refresh",
+      "description": "Sends the refreshToken cookie from the jar; returns a new access token and rotates the cookie. 401 without a valid cookie.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/auth/refresh",
+      "headers": [],
+      "body": {},
+      "authentication": {},
+      "metaSortKey": -80
+    },
+    {
+      "_id": "req_auth_logout",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Logout",
+      "description": "204. Revokes the session and clears the cookie.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/auth/logout",
+      "headers": [],
+      "body": {},
+      "authentication": {},
+      "metaSortKey": -70
+    },
+    {
+      "_id": "req_devices_list",
+      "_type": "request",
+      "parentId": "fld_devices",
+      "name": "List devices",
+      "description": "Optional filters: brand (exact) and state (Available, InUse, Inactive). Enable them in the Query tab.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/devices",
+      "parameters": [
+        { "name": "brand", "value": "Apple", "disabled": true },
+        { "name": "state", "value": "InUse", "disabled": true }
+      ],
+      "headers": [],
+      "body": {},
+      "authentication": { "type": "bearer", "token": "{{ _.token }}", "prefix": "Bearer" },
+      "metaSortKey": -100
+    },
+    {
+      "_id": "req_devices_get",
+      "_type": "request",
+      "parentId": "fld_devices",
+      "name": "Get device",
+      "description": "200 with the device, 404 if it does not exist.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/devices/{{ _.device_id }}",
+      "headers": [],
+      "body": {},
+      "authentication": { "type": "bearer", "token": "{{ _.token }}", "prefix": "Bearer" },
+      "metaSortKey": -90
+    },
+    {
+      "_id": "req_devices_create",
+      "_type": "request",
+      "parentId": "fld_devices",
+      "name": "Create device",
+      "description": "201 with a Location header. 400 for blank name/brand, more than 100 characters or an unknown state.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/api/devices",
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"iPad Air\",\n  \"brand\": \"Apple\",\n  \"state\": \"Available\"\n}"
+      },
+      "authentication": { "type": "bearer", "token": "{{ _.token }}", "prefix": "Bearer" },
+      "metaSortKey": -80
+    },
+    {
+      "_id": "req_devices_update",
+      "_type": "request",
+      "parentId": "fld_devices",
+      "name": "Replace device (PUT)",
+      "description": "All fields required. 409 if the device is InUse and name or brand change; 404 if unknown.",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/api/devices/{{ _.device_id }}",
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"iPhone 15 Pro\",\n  \"brand\": \"Apple\",\n  \"state\": \"Inactive\"\n}"
+      },
+      "authentication": { "type": "bearer", "token": "{{ _.token }}", "prefix": "Bearer" },
+      "metaSortKey": -70
+    },
+    {
+      "_id": "req_devices_patch",
+      "_type": "request",
+      "parentId": "fld_devices",
+      "name": "Patch device",
+      "description": "Only the fields sent change. Same InUse rule as PUT.",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/api/devices/{{ _.device_id }}",
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"state\": \"Available\"\n}"
+      },
+      "authentication": { "type": "bearer", "token": "{{ _.token }}", "prefix": "Bearer" },
+      "metaSortKey": -60
+    },
+    {
+      "_id": "req_devices_delete",
+      "_type": "request",
+      "parentId": "fld_devices",
+      "name": "Delete device",
+      "description": "204. 409 if the device is InUse; 404 if unknown.",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/api/devices/{{ _.device_id }}",
+      "headers": [],
+      "body": {},
+      "authentication": { "type": "bearer", "token": "{{ _.token }}", "prefix": "Bearer" },
+      "metaSortKey": -50
+    },
+    {
+      "_id": "req_devices_unauthenticated",
+      "_type": "request",
+      "parentId": "fld_devices",
+      "name": "List devices without token (401)",
+      "description": "Shows the 401 ProblemDetails returned when no bearer token is sent.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/api/devices",
+      "headers": [],
+      "body": {},
+      "authentication": {},
+      "metaSortKey": -40
+    }
+  ]
+}

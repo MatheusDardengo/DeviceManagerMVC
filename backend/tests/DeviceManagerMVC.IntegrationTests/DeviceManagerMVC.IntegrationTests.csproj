@@ -26,11 +26,11 @@
 
   <!-- Same scripts docker-compose runs, so tests use the real schema. -->
   <ItemGroup>
-    <None Include="..\database\*.sql" Link="database\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\..\database\*.sql" Link="database\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DeviceManagerMVC.Infrastructure\DeviceManagerMVC.Infrastructure.csproj" />
-    <ProjectReference Include="..\DeviceManagerMVC.Api\DeviceManagerMVC.Api.csproj" />
+    <ProjectReference Include="..\..\src\DeviceManagerMVC.Infrastructure\DeviceManagerMVC.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\DeviceManagerMVC.Api\DeviceManagerMVC.Api.csproj" />
   </ItemGroup>
 
 </Project>

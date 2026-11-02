@@ -11,8 +11,8 @@
 - Every layer must have tests.
 
 ## Tests
-- tests/DeviceManagerMVC.UnitTests → Domain + Application (xUnit, Shouldly, NSubstitute). No I/O.
-- tests/DeviceManagerMVC.IntegrationTests → Infrastructure + Api (Testcontainers.MsSql, WebApplicationFactory).
+- backend/tests/DeviceManagerMVC.UnitTests → Domain + Application (xUnit, Shouldly, NSubstitute). No I/O.
+- backend/tests/DeviceManagerMVC.IntegrationTests → Infrastructure + Api (Testcontainers.MsSql, WebApplicationFactory).
 - Strict TDD: write the failing test first, STOP and let me run it and commit (red),
   then implement the minimum to pass, STOP again (green), then propose refactors.
 

@@ -26,8 +26,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DeviceManagerMVC.Domain\DeviceManagerMVC.Domain.csproj" />
-    <ProjectReference Include="..\DeviceManagerMVC.Application\DeviceManagerMVC.Application.csproj" />
+    <ProjectReference Include="..\..\src\DeviceManagerMVC.Domain\DeviceManagerMVC.Domain.csproj" />
+    <ProjectReference Include="..\..\src\DeviceManagerMVC.Application\DeviceManagerMVC.Application.csproj" />
   </ItemGroup>
 
 </Project>

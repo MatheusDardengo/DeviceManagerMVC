@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/DeviceManagerMVC.Api/DeviceManagerMVC.Api.csproj" />
+    <Project Path="src/DeviceManagerMVC.Application/DeviceManagerMVC.Application.csproj" />
+    <Project Path="src/DeviceManagerMVC.Domain/DeviceManagerMVC.Domain.csproj" />
+    <Project Path="src/DeviceManagerMVC.Infrastructure/DeviceManagerMVC.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/DeviceManagerMVC.IntegrationTests/DeviceManagerMVC.IntegrationTests.csproj" />
+    <Project Path="tests/DeviceManagerMVC.UnitTests/DeviceManagerMVC.UnitTests.csproj" />
+  </Folder>
+</Solution>
