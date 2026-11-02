@@ -71,6 +71,12 @@ public sealed class Device
             throw new BusinessRuleViolationException("Name and brand cannot be changed while the device is in use.");
         }
 
+        // Nothing actually changes: keep UpdatedAtUtc meaning "data last changed".
+        if (validName == Name && validBrand == Brand && state == State)
+        {
+            return;
+        }
+
         Name = validName;
         Brand = validBrand;
         State = state;
