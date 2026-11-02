@@ -12,6 +12,10 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Device, DEVICE_STATE_LABELS, DEVICE_STATES, DeviceState } from '../device.model';
 import { DeviceService } from '../device.service';
+import { MatDialog } from '@angular/material/dialog';
+import { firstValueFrom } from 'rxjs';
+import { DeviceFormDialog, DeviceFormDialogData } from '../device-form-dialog/device-form-dialog';
+import {MatIconModule} from '@angular/material/icon';
 
 @Component({
   imports: [
@@ -24,6 +28,7 @@ import { DeviceService } from '../device.service';
     MatSelectModule,
     MatTableModule,
     MatToolbarModule,
+    MatIconModule,
   ],
   selector: 'app-device-list',
   styleUrl: './device-list.scss',
@@ -34,13 +39,15 @@ export class DeviceList implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
+   private readonly dialog = inject(MatDialog);
+
   protected readonly states = DEVICE_STATES;
 
   protected stateLabel(state: DeviceState): string {
     return DEVICE_STATE_LABELS[state];
   }
-  
-  protected readonly columns = ['name', 'brand', 'state', 'updatedAtUtc', 'createdAtUtc'];
+
+  protected readonly columns = ['name', 'brand', 'state', 'updatedAtUtc', 'createdAtUtc', 'actions'];
 
   protected readonly filters = inject(NonNullableFormBuilder).group({
     brand: '',
@@ -77,5 +84,17 @@ export class DeviceList implements OnInit {
   protected async logout(): Promise<void> {
     await this.auth.logout();
     await this.router.navigate(['/login']);
+  }
+
+  protected async openForm(device?: Device): Promise<void> {
+    const saved = await firstValueFrom(
+      this.dialog
+        .open<DeviceFormDialog, DeviceFormDialogData, Device>(DeviceFormDialog, { data: { device } })
+        .afterClosed(),
+    );
+
+    if (saved) {
+      await this.load();
+    }
   }
 }

@@ -1,0 +1,15 @@
+mat-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: min(400px, 80vw);
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+.error {
+  color: var(--mat-sys-error);
+  margin: 0;
+}

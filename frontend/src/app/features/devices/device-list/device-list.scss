@@ -56,3 +56,15 @@ table {
   background: var(--mat-sys-surface-container-highest);
   color: var(--mat-sys-on-surface-variant);
 }
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.actions {
+  text-align: right;
+}
+
