@@ -43,12 +43,17 @@ public sealed class SqlServerFixture : IAsyncLifetime
     /// Empties the Devices table so each test starts clean. Identity is not reseeded:
     /// tests use the ids returned by the repository, never hardcoded ones.
     /// </summary>
-    public async Task ResetDevicesAsync()
+    public Task ResetDevicesAsync() => ExecuteAsync("DELETE FROM dbo.Devices;");
+
+    /// <summary>Empties Users; RefreshTokens go with them through ON DELETE CASCADE.</summary>
+    public Task ResetUsersAsync() => ExecuteAsync("DELETE FROM dbo.Users;");
+
+    private async Task ExecuteAsync(string sql)
     {
         await using var connection = new SqlConnection(ConnectionString);
         await connection.OpenAsync();
 
-        await using var command = new SqlCommand("DELETE FROM dbo.Devices;", connection);
+        await using var command = new SqlCommand(sql, connection);
         await command.ExecuteNonQueryAsync();
     }
 
