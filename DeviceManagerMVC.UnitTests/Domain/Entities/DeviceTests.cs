@@ -198,6 +198,42 @@ public sealed class DeviceTests
         device.UpdatedAtUtc.ShouldBe(CreatedAt.UtcDateTime);
     }
 
+    [Fact]
+    public void Update_with_identical_values_does_not_change_UpdatedAtUtc()
+    {
+        var device = CreateDevice(DeviceState.InUse);
+        _time.Advance(TimeSpan.FromHours(1));
+
+        device.Update("iPhone 15", "Apple", DeviceState.InUse, _time);
+
+        device.UpdatedAtUtc.ShouldBe(CreatedAt.UtcDateTime);
+    }
+
+    [Fact]
+    public void Update_with_values_identical_after_trimming_does_not_change_UpdatedAtUtc()
+    {
+        var device = CreateDevice();
+        _time.Advance(TimeSpan.FromHours(1));
+
+        device.Update(" iPhone 15 ", " Apple ", DeviceState.Available, _time);
+
+        device.UpdatedAtUtc.ShouldBe(CreatedAt.UtcDateTime);
+    }
+
+    [Theory]
+    [InlineData("iPhone 16", "Apple", DeviceState.Available)]
+    [InlineData("iPhone 15", "Samsung", DeviceState.Available)]
+    [InlineData("iPhone 15", "Apple", DeviceState.Inactive)]
+    public void Update_changing_any_single_field_changes_UpdatedAtUtc(string name, string brand, DeviceState state)
+    {
+        var device = CreateDevice();
+        _time.Advance(TimeSpan.FromHours(1));
+
+        device.Update(name, brand, state, _time);
+
+        device.UpdatedAtUtc.ShouldBe(CreatedAt.AddHours(1).UtcDateTime);
+    }
+
     // ---------- Delete ----------
 
     [Theory]
