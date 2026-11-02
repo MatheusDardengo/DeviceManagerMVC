@@ -77,7 +77,7 @@ public sealed class DeviceRepository(SqlConnectionFactory connectionFactory) : I
         return (int)(await command.ExecuteScalarAsync(cancellationToken))!;
     }
 
-    public async Task UpdateAsync(int id, Device device, CancellationToken cancellationToken)
+    public async Task<bool> UpdateAsync(int id, Device device, CancellationToken cancellationToken)
     {
         // CreatedAtUtc is deliberately absent: it never changes after creation.
         const string sql = """
@@ -95,15 +95,17 @@ public sealed class DeviceRepository(SqlConnectionFactory connectionFactory) : I
         AddDateTime(command, "@UpdatedAtUtc", device.UpdatedAtUtc);
 
         await command.ExecuteNonQueryAsync(cancellationToken);
+        return true;
     }
 
-    public async Task DeleteAsync(int id, CancellationToken cancellationToken)
+    public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken)
     {
         await using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken);
         await using var command = new SqlCommand("DELETE FROM dbo.Devices WHERE Id = @Id;", connection);
         AddId(command, id);
 
         await command.ExecuteNonQueryAsync(cancellationToken);
+        return true;
     }
 
     private static Device Map(SqlDataReader reader) =>

@@ -143,8 +143,9 @@ public sealed class DeviceRepositoryTests(SqlServerFixture fixture) : IAsyncLife
         _time.Advance(TimeSpan.FromHours(1));
         device!.Update("Galaxy S24", "Samsung", DeviceState.Inactive, _time);
 
-        await _sut.UpdateAsync(id, device, _ct);
+        var updated = await _sut.UpdateAsync(id, device, _ct);
 
+        updated.ShouldBeTrue();
         var stored = await _sut.GetByIdAsync(id, _ct);
         stored!.Name.ShouldBe("Galaxy S24");
         stored.Brand.ShouldBe("Samsung");
@@ -166,6 +167,18 @@ public sealed class DeviceRepositoryTests(SqlServerFixture fixture) : IAsyncLife
         (await _sut.GetByIdAsync(other, _ct))!.Name.ShouldBe("Galaxy S24");
     }
 
+    [Fact]
+    public async Task Update_returns_false_when_device_no_longer_exists()
+    {
+        var id = await _sut.AddAsync(NewDevice(), _ct);
+        var device = await _sut.GetByIdAsync(id, _ct);
+        await _sut.DeleteAsync(id, _ct); // simulates a concurrent delete
+
+        var updated = await _sut.UpdateAsync(id, device!, _ct);
+
+        updated.ShouldBeFalse();
+    }
+
     // ---------- Delete ----------
 
     [Fact]
@@ -174,9 +187,21 @@ public sealed class DeviceRepositoryTests(SqlServerFixture fixture) : IAsyncLife
         var target = await _sut.AddAsync(NewDevice("iPhone 15"), _ct);
         var other = await _sut.AddAsync(NewDevice("Galaxy S24", "Samsung"), _ct);
 
-        await _sut.DeleteAsync(target, _ct);
+        var deleted = await _sut.DeleteAsync(target, _ct);
 
+        deleted.ShouldBeTrue();
         (await _sut.GetByIdAsync(target, _ct)).ShouldBeNull();
         (await _sut.GetByIdAsync(other, _ct)).ShouldNotBeNull();
+    }
+
+    [Fact]
+    public async Task Delete_returns_false_when_device_no_longer_exists()
+    {
+        var id = await _sut.AddAsync(NewDevice(), _ct);
+        await _sut.DeleteAsync(id, _ct);
+
+        var deleted = await _sut.DeleteAsync(id, _ct);
+
+        deleted.ShouldBeFalse();
     }
 }

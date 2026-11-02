@@ -13,7 +13,9 @@ public interface IDeviceRepository
     /// <summary>Inserts the device and returns the database-generated id.</summary>
     Task<int> AddAsync(Device device, CancellationToken cancellationToken);
 
-    Task UpdateAsync(int id, Device device, CancellationToken cancellationToken);
+    /// <summary>Returns false when no row matched (e.g. deleted concurrently).</summary>
+    Task<bool> UpdateAsync(int id, Device device, CancellationToken cancellationToken);
 
-    Task DeleteAsync(int id, CancellationToken cancellationToken);
+    /// <summary>Returns false when no row matched (e.g. deleted concurrently).</summary>
+    Task<bool> DeleteAsync(int id, CancellationToken cancellationToken);
 }

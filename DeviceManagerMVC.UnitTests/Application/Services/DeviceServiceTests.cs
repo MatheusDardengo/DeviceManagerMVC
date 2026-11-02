@@ -33,7 +33,16 @@ public sealed class DeviceServiceTests
     {
         var device = Device.Create("iPhone 15", "Apple", state, _time);
         _repository.GetByIdAsync(DeviceId, _ct).Returns(device);
+        _repository.UpdateAsync(DeviceId, device, _ct).Returns(true);
+        _repository.DeleteAsync(DeviceId, _ct).Returns(true);
         return device;
+    }
+
+    /// <summary>The device is found, but a concurrent request deletes it before we write.</summary>
+    private void GivenDeviceDeletedConcurrently(Device device)
+    {
+        _repository.UpdateAsync(DeviceId, device, _ct).Returns(false);
+        _repository.DeleteAsync(DeviceId, _ct).Returns(false);
     }
 
     // ---------- Create ----------
@@ -131,7 +140,25 @@ public sealed class DeviceServiceTests
         await _repository.DidNotReceiveWithAnyArgs().UpdateAsync(default, default!, default);
     }
 
+    [Fact]
+    public async Task Update_throws_NotFound_when_device_was_deleted_concurrently()
+    {
+        GivenDeviceDeletedConcurrently(GivenStoredDevice());
+
+        await Should.ThrowAsync<NotFoundException>(() => _sut.UpdateAsync(
+            DeviceId, new UpdateDeviceRequest("Galaxy S24", "Samsung", DeviceState.Available), _ct));
+    }
+
     // ---------- Patch ----------
+
+    [Fact]
+    public async Task Patch_throws_NotFound_when_device_was_deleted_concurrently()
+    {
+        GivenDeviceDeletedConcurrently(GivenStoredDevice());
+
+        await Should.ThrowAsync<NotFoundException>(
+            () => _sut.PatchAsync(DeviceId, new PatchDeviceRequest(null, null, DeviceState.Inactive), _ct));
+    }
 
     [Fact]
     public async Task Patch_changes_only_provided_fields()
@@ -186,6 +213,14 @@ public sealed class DeviceServiceTests
         await _sut.DeleteAsync(DeviceId, _ct);
 
         await _repository.Received(1).DeleteAsync(DeviceId, _ct);
+    }
+
+    [Fact]
+    public async Task Delete_throws_NotFound_when_device_was_deleted_concurrently()
+    {
+        GivenDeviceDeletedConcurrently(GivenStoredDevice());
+
+        await Should.ThrowAsync<NotFoundException>(() => _sut.DeleteAsync(DeviceId, _ct));
     }
 
     [Fact]
