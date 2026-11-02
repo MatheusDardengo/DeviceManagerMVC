@@ -1,3 +1,4 @@
+using DeviceManagerMVC.Domain.Common;
 using DeviceManagerMVC.Domain.Enums;
 
 namespace DeviceManagerMVC.Domain.Entities;
@@ -18,12 +19,72 @@ public sealed class Device
     public DateTime CreatedAtUtc { get; private set; }
     public DateTime UpdatedAtUtc { get; private set; }
 
-    public static Device Create(string name, string brand, DeviceState state, TimeProvider timeProvider) =>
-        throw new NotImplementedException();
+    public static Device Create(string name, string brand, DeviceState state, TimeProvider timeProvider)
+    {
+        var validName = ValidateText(name, nameof(Name), NameMaxLength);
+        var validBrand = ValidateText(brand, nameof(Brand), BrandMaxLength);
+        ValidateState(state);
 
-    public void Update(string name, string brand, DeviceState state, TimeProvider timeProvider) =>
-        throw new NotImplementedException();
+        var now = timeProvider.GetUtcNow().UtcDateTime;
 
-    public void EnsureCanBeDeleted() =>
-        throw new NotImplementedException();
+        return new Device
+        {
+            Name = validName,
+            Brand = validBrand,
+            State = state,
+            CreatedAtUtc = now,
+            UpdatedAtUtc = now
+        };
+    }
+
+    public void Update(string name, string brand, DeviceState state, TimeProvider timeProvider)
+    {
+        // Validate everything before assigning anything, so a failed update leaves the device untouched.
+        var validName = ValidateText(name, nameof(Name), NameMaxLength);
+        var validBrand = ValidateText(brand, nameof(Brand), BrandMaxLength);
+        ValidateState(state);
+
+        // Checked against the current state: a device must be released before it can be renamed.
+        if (State == DeviceState.InUse && (validName != Name || validBrand != Brand))
+        {
+            throw new BusinessRuleViolationException("Name and brand cannot be changed while the device is in use.");
+        }
+
+        Name = validName;
+        Brand = validBrand;
+        State = state;
+        UpdatedAtUtc = timeProvider.GetUtcNow().UtcDateTime;
+    }
+
+    public void EnsureCanBeDeleted()
+    {
+        if (State == DeviceState.InUse)
+        {
+            throw new BusinessRuleViolationException("A device in use cannot be deleted.");
+        }
+    }
+
+    private static string ValidateText(string? value, string field, int maxLength)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new DomainValidationException($"{field} is required.");
+        }
+
+        var trimmed = value.Trim();
+        if (trimmed.Length > maxLength)
+        {
+            throw new DomainValidationException($"{field} must be at most {maxLength} characters.");
+        }
+
+        return trimmed;
+    }
+
+    private static void ValidateState(DeviceState state)
+    {
+        if (!Enum.IsDefined(state))
+        {
+            throw new DomainValidationException($"State '{(int)state}' is not a valid device state.");
+        }
+    }
 }
