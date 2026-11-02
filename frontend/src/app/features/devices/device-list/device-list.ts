@@ -35,7 +35,11 @@ export class DeviceList implements OnInit {
   private readonly router = inject(Router);
 
   protected readonly states = DEVICE_STATES;
-  protected readonly stateLabels = DEVICE_STATE_LABELS;
+
+  protected stateLabel(state: DeviceState): string {
+    return DEVICE_STATE_LABELS[state];
+  }
+  
   protected readonly columns = ['name', 'brand', 'state', 'updatedAtUtc', 'createdAtUtc'];
 
   protected readonly filters = inject(NonNullableFormBuilder).group({
