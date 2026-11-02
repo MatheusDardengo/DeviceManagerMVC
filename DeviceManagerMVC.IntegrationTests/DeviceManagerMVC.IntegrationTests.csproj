@@ -10,6 +10,7 @@
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.2" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="7.1.1" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" Version="10.11.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="Shouldly" Version="4.3.0" />
     <PackageReference Include="Testcontainers.MsSql" Version="4.16.0" />
@@ -24,6 +25,9 @@
   <!-- Same scripts docker-compose runs, so tests use the real schema. -->
   <ItemGroup>
     <None Include="..\database\*.sql" Link="database\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DeviceManagerMVC.Infrastructure\DeviceManagerMVC.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

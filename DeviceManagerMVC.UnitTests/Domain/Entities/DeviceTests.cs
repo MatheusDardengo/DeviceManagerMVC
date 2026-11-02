@@ -217,4 +217,43 @@ public sealed class DeviceTests
 
         Should.Throw<BusinessRuleViolationException>(device.EnsureCanBeDeleted);
     }
+
+    // ---------- Rehydrate ----------
+
+    [Fact]
+    public void Rehydrate_restores_all_persisted_values()
+    {
+        var createdAt = new DateTime(2025, 5, 1, 8, 0, 0, DateTimeKind.Utc);
+        var updatedAt = new DateTime(2025, 6, 1, 8, 0, 0, DateTimeKind.Utc);
+
+        var device = Device.Rehydrate(12, "Pixel 8", "Google", DeviceState.InUse, createdAt, updatedAt);
+
+        device.Id.ShouldBe(12);
+        device.Name.ShouldBe("Pixel 8");
+        device.Brand.ShouldBe("Google");
+        device.State.ShouldBe(DeviceState.InUse);
+        device.CreatedAtUtc.ShouldBe(createdAt);
+        device.UpdatedAtUtc.ShouldBe(updatedAt);
+    }
+
+    [Fact]
+    public void Rehydrate_marks_timestamps_as_utc()
+    {
+        // SqlClient reads DATETIME2 as DateTimeKind.Unspecified.
+        var unspecified = new DateTime(2025, 5, 1, 8, 0, 0, DateTimeKind.Unspecified);
+
+        var device = Device.Rehydrate(1, "Pixel 8", "Google", DeviceState.Available, unspecified, unspecified);
+
+        device.CreatedAtUtc.Kind.ShouldBe(DateTimeKind.Utc);
+        device.UpdatedAtUtc.Kind.ShouldBe(DateTimeKind.Utc);
+    }
+
+    [Fact]
+    public void Rehydrated_device_still_enforces_rules()
+    {
+        var at = new DateTime(2025, 5, 1, 8, 0, 0, DateTimeKind.Utc);
+        var device = Device.Rehydrate(1, "Pixel 8", "Google", DeviceState.InUse, at, at);
+
+        Should.Throw<BusinessRuleViolationException>(device.EnsureCanBeDeleted);
+    }
 }

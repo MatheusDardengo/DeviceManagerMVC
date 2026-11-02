@@ -39,5 +39,18 @@ public sealed class SqlServerFixture : IAsyncLifetime
         }.ConnectionString;
     }
 
+    /// <summary>
+    /// Empties the Devices table so each test starts clean. Identity is not reseeded:
+    /// tests use the ids returned by the repository, never hardcoded ones.
+    /// </summary>
+    public async Task ResetDevicesAsync()
+    {
+        await using var connection = new SqlConnection(ConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = new SqlCommand("DELETE FROM dbo.Devices;", connection);
+        await command.ExecuteNonQueryAsync();
+    }
+
     public Task DisposeAsync() => _container.DisposeAsync().AsTask();
 }

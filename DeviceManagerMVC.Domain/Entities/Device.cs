@@ -39,6 +39,14 @@ public sealed class Device
         };
     }
 
+    /// <summary>
+    /// Restores a device that already exists in storage. Not a creation path:
+    /// no validation and no clock, the values are trusted as persisted.
+    /// </summary>
+    public static Device Rehydrate(
+        int id, string name, string brand, DeviceState state, DateTime createdAtUtc, DateTime updatedAtUtc) =>
+        throw new NotImplementedException();
+
     public void Update(string name, string brand, DeviceState state, TimeProvider timeProvider)
     {
         ArgumentNullException.ThrowIfNull(timeProvider);
