@@ -13,6 +13,8 @@ export class AuthService {
 
   private readonly token = signal<string | null>(null);
 
+  private refreshInFlight: Promise<boolean> | null = null;
+
   readonly accessToken = this.token.asReadonly();
   readonly isAuthenticated = computed(() => this.token() !== null);
 
@@ -24,8 +26,17 @@ export class AuthService {
     this.token.set(response.accessToken);
   }
 
-  /** Uses the refresh cookie the browser sends automatically. Returns false when the session is gone. */
-  async refresh(): Promise<boolean> {
+   /**
+   * Uses the refresh cookie the browser sends automatically. Returns false when the session is gone.
+   * Concurrent callers share one request: a second call with the already-rotated cookie would look
+   * like token reuse to the API and revoke the whole session.
+   */
+  refresh(): Promise<boolean> {
+    this.refreshInFlight ??= this.requestRefresh().finally(() => (this.refreshInFlight = null));
+    return this.refreshInFlight;
+  }
+
+  private async requestRefresh(): Promise<boolean> {
     try {
       const response = await firstValueFrom(
         this.http.post<AccessTokenResponse>('/api/auth/refresh', null),

@@ -79,6 +79,17 @@ describe('AuthService', () => {
     expect(service.isAuthenticated()).toBe(false);
   });
 
+  it('concurrent refresh calls share a single request', async () => {
+    await givenLoggedIn();
+
+    const first = service.refresh();
+    const second = service.refresh();
+    http.expectOne('/api/auth/refresh').flush(tokenResponse('new-jwt'));
+
+    expect(await first).toBe(true);
+    expect(await second).toBe(true);
+  });
+
   // ---------- logout ----------
 
   it('logout posts to the logout endpoint and clears the access token', async () => {
