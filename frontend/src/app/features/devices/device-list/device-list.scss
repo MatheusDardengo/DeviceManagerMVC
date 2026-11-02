@@ -1,0 +1,58 @@
+.spacer {
+  flex: 1;
+}
+
+.devices {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.title {
+  font: var(--mat-sys-headline-small);
+  margin: 8px 0 16px;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.error {
+  color: var(--mat-sys-error);
+}
+
+table {
+  width: 100%;
+}
+
+.empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.state {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font: var(--mat-sys-label-medium);
+}
+
+.state-Available {
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+}
+
+.state-InUse {
+  background: var(--mat-sys-tertiary-container);
+  color: var(--mat-sys-on-tertiary-container);
+}
+
+.state-Inactive {
+  background: var(--mat-sys-surface-container-highest);
+  color: var(--mat-sys-on-surface-variant);
+}

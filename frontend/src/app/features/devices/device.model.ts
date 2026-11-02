@@ -21,3 +21,9 @@ export interface DeviceFilters {
   brand?: string;
   state?: DeviceState;
 }
+
+export const DEVICE_STATE_LABELS: Record<DeviceState, string> = {
+  Available: 'Available',
+  InUse: 'In use',
+  Inactive: 'Inactive',
+};

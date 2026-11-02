@@ -1,1 +1,72 @@
-<p>device-list works!</p>
+<mat-toolbar>
+  <span>Device Manager</span>
+  <span class="spacer"></span>
+  <button mat-button type="button" (click)="logout()">Log out</button>
+</mat-toolbar>
+
+<main class="devices">
+  <h1 class="title">Devices</h1>
+
+  <form class="filters" [formGroup]="filters" (ngSubmit)="load()">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Brand</mat-label>
+      <input matInput formControlName="brand" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>State</mat-label>
+      <mat-select formControlName="state">
+        <mat-option value="">All</mat-option>
+        @for (state of states; track state) {
+          <mat-option [value]="state">{{ stateLabels[state] }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <button mat-flat-button type="submit">Filter</button>
+    <button mat-button type="button" (click)="clearFilters()">Clear</button>
+  </form>
+
+  @if (error(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  }
+
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  <table mat-table [dataSource]="devices()">
+    <ng-container matColumnDef="name">
+      <th mat-header-cell *matHeaderCellDef>Name</th>
+      <td mat-cell *matCellDef="let device">{{ device.name }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="brand">
+      <th mat-header-cell *matHeaderCellDef>Brand</th>
+      <td mat-cell *matCellDef="let device">{{ device.brand }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="state">
+      <th mat-header-cell *matHeaderCellDef>State</th>
+      <td mat-cell *matCellDef="let device">
+        <span class="state" [class]="'state state-' + device.state">{{ stateLabels[device.state] }}</span>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="updatedAtUtc">
+      <th mat-header-cell *matHeaderCellDef>Last updated</th>
+      <td mat-cell *matCellDef="let device">{{ device.updatedAtUtc | date: 'short' }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="createdAtUtc">
+      <th mat-header-cell *matHeaderCellDef>Created</th>
+      <td mat-cell *matCellDef="let device">{{ device.createdAtUtc | date: 'short' }}</td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="columns"></tr>
+    <tr mat-row *matRowDef="let row; columns: columns"></tr>
+    <tr class="mat-mdc-row" *matNoDataRow>
+      <td class="empty" [attr.colspan]="columns.length">No devices found.</td>
+    </tr>
+  </table>
+</main>
