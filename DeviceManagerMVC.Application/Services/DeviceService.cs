@@ -41,7 +41,7 @@ public sealed class DeviceService(IDeviceRepository repository, TimeProvider tim
         var device = await GetExistingAsync(id, cancellationToken);
 
         device.Update(request.Name, request.Brand, request.State, timeProvider);
-        await repository.UpdateAsync(id, device, cancellationToken);
+        await SaveAsync(id, device, cancellationToken);
 
         return ToResponse(id, device);
     }
@@ -56,7 +56,7 @@ public sealed class DeviceService(IDeviceRepository repository, TimeProvider tim
             request.Brand ?? device.Brand,
             request.State ?? device.State,
             timeProvider);
-        await repository.UpdateAsync(id, device, cancellationToken);
+        await SaveAsync(id, device, cancellationToken);
 
         return ToResponse(id, device);
     }
@@ -66,12 +66,27 @@ public sealed class DeviceService(IDeviceRepository repository, TimeProvider tim
         var device = await GetExistingAsync(id, cancellationToken);
 
         device.EnsureCanBeDeleted();
-        await repository.DeleteAsync(id, cancellationToken);
+
+        // The device may have been deleted between the read above and this write.
+        if (!await repository.DeleteAsync(id, cancellationToken))
+        {
+            throw NotFound(id);
+        }
     }
 
     private async Task<Device> GetExistingAsync(int id, CancellationToken cancellationToken) =>
-        await repository.GetByIdAsync(id, cancellationToken)
-        ?? throw new NotFoundException($"Device {id} was not found.");
+        await repository.GetByIdAsync(id, cancellationToken) ?? throw NotFound(id);
+
+    private async Task SaveAsync(int id, Device device, CancellationToken cancellationToken)
+    {
+        // The device may have been deleted between the read and this write.
+        if (!await repository.UpdateAsync(id, device, cancellationToken))
+        {
+            throw NotFound(id);
+        }
+    }
+
+    private static NotFoundException NotFound(int id) => new($"Device {id} was not found.");
 
     private static DeviceResponse ToResponse(int id, Device device) =>
         new(id, device.Name, device.Brand, device.State, device.CreatedAtUtc, device.UpdatedAtUtc);

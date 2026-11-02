@@ -94,8 +94,7 @@ public sealed class DeviceRepository(SqlConnectionFactory connectionFactory) : I
         AddState(command, device.State);
         AddDateTime(command, "@UpdatedAtUtc", device.UpdatedAtUtc);
 
-        await command.ExecuteNonQueryAsync(cancellationToken);
-        return true;
+        return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
     }
 
     public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken)
@@ -104,8 +103,7 @@ public sealed class DeviceRepository(SqlConnectionFactory connectionFactory) : I
         await using var command = new SqlCommand("DELETE FROM dbo.Devices WHERE Id = @Id;", connection);
         AddId(command, id);
 
-        await command.ExecuteNonQueryAsync(cancellationToken);
-        return true;
+        return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
     }
 
     private static Device Map(SqlDataReader reader) =>
