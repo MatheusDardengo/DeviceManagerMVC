@@ -1,0 +1,21 @@
+.login {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+.login-error {
+  color: var(--mat-sys-error);
+  margin: 0 0 8px;
+}
