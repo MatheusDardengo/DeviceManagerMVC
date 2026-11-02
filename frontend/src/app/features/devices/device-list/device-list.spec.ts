@@ -13,6 +13,9 @@ import { DeviceFormDialog } from '../device-form-dialog/device-form-dialog';
 import { Device, DeviceFilters, DeviceState } from '../device.model';
 import { DeviceService } from '../device.service';
 import { DeviceList } from './device-list';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ConfirmDialog } from '../../../shared/confirm-dialog/confirm-dialog';
+
 
 describe('DeviceList', () => {
   let fixture: ComponentFixture<DeviceList>;
@@ -20,6 +23,7 @@ describe('DeviceList', () => {
   let router: Router;
 
   const list = vi.fn<(filters?: DeviceFilters) => Promise<Device[]>>();
+  const deleteDevice = vi.fn<(id: number) => Promise<void>>();
   const logout = vi.fn<() => Promise<void>>();
   const open = vi.fn();
 
@@ -61,7 +65,7 @@ describe('DeviceList', () => {
       imports: [DeviceList],
       providers: [
         provideRouter([]),
-        { provide: DeviceService, useValue: { list } },
+        { provide: DeviceService, useValue: { list, delete: deleteDevice } },
         { provide: AuthService, useValue: { logout } },
         { provide: MatDialog, useValue: { open } },
       ],
@@ -73,6 +77,8 @@ describe('DeviceList', () => {
     fixture = TestBed.createComponent(DeviceList);
     loader = TestbedHarnessEnvironment.loader(fixture);
     await settle();
+
+    deleteDevice.mockReset().mockResolvedValue();
   });
 
   it('loads every device on start and shows them in the table', async () => {
@@ -139,7 +145,9 @@ describe('DeviceList', () => {
   });
 
   it('Edit opens the form with that row and does not reload when cancelled', async () => {
-    const [firstEdit] = await loader.getAllHarnesses(MatButtonHarness.with({ text: 'Edit' }));
+    const [firstEdit] = await loader.getAllHarnesses(
+      MatButtonHarness.with({ selector: '[aria-label="Edit device"]' }),
+    );
 
     await firstEdit.click();
     await settle();
@@ -149,4 +157,46 @@ describe('DeviceList', () => {
     });
     expect(list).toHaveBeenCalledTimes(1);
   });
+
+    async function clickFirstDelete(): Promise<void> {
+    const [firstDelete] = await loader.getAllHarnesses(
+      MatButtonHarness.with({ selector: '[aria-label="Delete device"]' }),
+    );
+    await firstDelete.click();
+    await settle();
+  }
+
+  it('Delete asks for confirmation, deletes the row and reloads', async () => {
+    dialogClosesWith(true);
+
+    await clickFirstDelete();
+
+    expect(open).toHaveBeenCalledWith(
+      ConfirmDialog,
+      expect.objectContaining({ data: expect.objectContaining({ confirmText: 'Delete' }) }),
+    );
+    expect(deleteDevice).toHaveBeenCalledWith(1);
+    expect(list).toHaveBeenCalledTimes(2);
+  });
+
+  it('Delete does nothing when the confirmation is cancelled', async () => {
+    dialogClosesWith(false);
+
+    await clickFirstDelete();
+
+    expect(deleteDevice).not.toHaveBeenCalled();
+    expect(list).toHaveBeenCalledTimes(1);
+  });
+
+  it('Delete shows the API message when the device is in use', async () => {
+    dialogClosesWith(true);
+    deleteDevice.mockRejectedValue(
+      new HttpErrorResponse({ status: 409, error: { detail: 'A device in use cannot be deleted.' } }),
+    );
+
+    await clickFirstDelete();
+
+    expect(page().querySelector('[role="alert"]')?.textContent).toContain('A device in use cannot be deleted.');
+  });
+
 });

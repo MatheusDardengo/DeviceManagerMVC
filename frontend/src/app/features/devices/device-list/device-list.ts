@@ -16,6 +16,8 @@ import { MatDialog } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
 import { DeviceFormDialog, DeviceFormDialogData } from '../device-form-dialog/device-form-dialog';
 import {MatIconModule} from '@angular/material/icon';
+import { problemMessage } from '../../../core/http/problem-details';
+import { ConfirmDialog, ConfirmDialogData } from '../../../shared/confirm-dialog/confirm-dialog';
 
 @Component({
   imports: [
@@ -95,6 +97,32 @@ export class DeviceList implements OnInit {
 
     if (saved) {
       await this.load();
+    }
+  }
+
+  protected async remove(device: Device): Promise<void> {
+    const confirmed = await firstValueFrom(
+      this.dialog
+        .open<ConfirmDialog, ConfirmDialogData, boolean>(ConfirmDialog, {
+          data: {
+            title: 'Delete device',
+            message: `Delete "${device.name}" (${device.brand})? This cannot be undone.`,
+            confirmText: 'Delete',
+          },
+        })
+        .afterClosed(),
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await this.deviceService.delete(device.id);
+      await this.load();
+    } catch (error) {
+      // e.g. 409 "A device in use cannot be deleted." comes straight from the API.
+      this.error.set(problemMessage(error, 'Could not delete the device. Please try again.'));
     }
   }
 }
