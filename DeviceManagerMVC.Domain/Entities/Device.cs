@@ -21,6 +21,8 @@ public sealed class Device
 
     public static Device Create(string name, string brand, DeviceState state, TimeProvider timeProvider)
     {
+        ArgumentNullException.ThrowIfNull(timeProvider);
+
         var validName = ValidateText(name, nameof(Name), NameMaxLength);
         var validBrand = ValidateText(brand, nameof(Brand), BrandMaxLength);
         ValidateState(state);
@@ -39,6 +41,8 @@ public sealed class Device
 
     public void Update(string name, string brand, DeviceState state, TimeProvider timeProvider)
     {
+        ArgumentNullException.ThrowIfNull(timeProvider);
+
         // Validate everything before assigning anything, so a failed update leaves the device untouched.
         var validName = ValidateText(name, nameof(Name), NameMaxLength);
         var validBrand = ValidateText(brand, nameof(Brand), BrandMaxLength);

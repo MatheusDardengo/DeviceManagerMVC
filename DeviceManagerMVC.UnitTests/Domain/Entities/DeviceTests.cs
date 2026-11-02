@@ -94,7 +94,23 @@ public sealed class DeviceTests
             () => Device.Create("iPhone 15", "Apple", (DeviceState)state, _time));
     }
 
+    [Fact]
+    public void Create_throws_ArgumentNullException_when_time_provider_is_null()
+    {
+        Should.Throw<ArgumentNullException>(
+            () => Device.Create("iPhone 15", "Apple", DeviceState.Available, null!));
+    }
+
     // ---------- Update ----------
+
+    [Fact]
+    public void Update_throws_ArgumentNullException_when_time_provider_is_null()
+    {
+        var device = CreateDevice();
+
+        Should.Throw<ArgumentNullException>(
+            () => device.Update("iPhone 15", "Apple", DeviceState.Available, null!));
+    }
 
     [Fact]
     public void Update_changes_fields_and_UpdatedAtUtc_but_keeps_CreatedAtUtc()
