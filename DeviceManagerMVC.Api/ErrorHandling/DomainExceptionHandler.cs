@@ -16,6 +16,7 @@ internal sealed class DomainExceptionHandler(IProblemDetailsService problemDetai
         var (status, title) = exception switch
         {
             DomainValidationException => (StatusCodes.Status400BadRequest, "Validation failed"),
+            UnauthorizedException => (StatusCodes.Status401Unauthorized, "Unauthorized"),
             NotFoundException => (StatusCodes.Status404NotFound, "Resource not found"),
             BusinessRuleViolationException => (StatusCodes.Status409Conflict, "Business rule violated"),
             _ => (0, null)

@@ -11,6 +11,7 @@ public static class DependencyInjection
         // TryAdd so tests can register a FakeTimeProvider first.
         services.TryAddSingleton(TimeProvider.System);
         services.AddScoped<DeviceService>();
+        services.AddScoped<AuthService>();
 
         return services;
     }

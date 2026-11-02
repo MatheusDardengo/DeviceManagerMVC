@@ -1,6 +1,7 @@
 using DeviceManagerMVC.Application.Dtos;
 using DeviceManagerMVC.Application.Services;
 using DeviceManagerMVC.Domain.Enums;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DeviceManagerMVC.Api.Controllers;
@@ -10,6 +11,7 @@ namespace DeviceManagerMVC.Api.Controllers;
 /// Errors are thrown by the domain/application and turned into ProblemDetails by the exception handler.
 /// </summary>
 [ApiController]
+[Authorize]
 [Route("api/devices")]
 public sealed class DevicesController(DeviceService deviceService) : ControllerBase
 {
