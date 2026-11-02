@@ -45,7 +45,16 @@ public sealed class Device
     /// </summary>
     public static Device Rehydrate(
         int id, string name, string brand, DeviceState state, DateTime createdAtUtc, DateTime updatedAtUtc) =>
-        throw new NotImplementedException();
+        new()
+        {
+            Id = id,
+            Name = name,
+            Brand = brand,
+            State = state,
+            // DATETIME2 comes back as Unspecified; the columns are UTC by convention.
+            CreatedAtUtc = DateTime.SpecifyKind(createdAtUtc, DateTimeKind.Utc),
+            UpdatedAtUtc = DateTime.SpecifyKind(updatedAtUtc, DateTimeKind.Utc)
+        };
 
     public void Update(string name, string brand, DeviceState state, TimeProvider timeProvider)
     {
