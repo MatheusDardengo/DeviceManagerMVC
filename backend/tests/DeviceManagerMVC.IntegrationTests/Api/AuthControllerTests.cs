@@ -241,4 +241,27 @@ public sealed class AuthControllerTests(SqlServerFixture fixture) : IAsyncLifeti
 
         response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
     }
+
+    // ---------- Me ----------
+
+    [Fact]
+    public async Task Me_with_a_valid_access_token_returns_200_with_the_current_user()
+    {
+        var registered = (await (await RegisterAsync()).Content.ReadFromJsonAsync<UserResponse>(Json))!;
+        var token = (await (await LoginAsync()).Content.ReadFromJsonAsync<AccessTokenResponse>(Json))!;
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
+
+        var response = await _client.GetAsync("/api/auth/me");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var body = await response.Content.ReadAsStringAsync();
+        body.ShouldNotContain("password", Case.Insensitive);
+        JsonSerializer.Deserialize<UserResponse>(body, Json).ShouldBe(registered);
+    }
+
+    [Fact]
+    public async Task Me_without_access_token_returns_401_problem()
+    {
+        await ShouldBeProblemAsync(await _client.GetAsync("/api/auth/me"), HttpStatusCode.Unauthorized);
+    }
 }

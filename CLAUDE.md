@@ -1,8 +1,8 @@
 # Device Manager — Ballast Lane take-home (Senior Full-Stack)
 
 ## Stack
-- .NET 9 Web API (controllers), SQL Server, Angular (later step)
-- Clean Architecture: Domain ← Application ← Infrastructure ← Api (Api is the composition root)
+- .NET 9 Web API (controllers), SQL Server, Angular 22
+- Clean Architecture: Domain ← Application ← Infrastructure ← Api
 
 ## Hard rules (from the exercise)
 - NO Entity Framework, NO Dapper, NO MediatR. Data access is pure ADO.NET (Microsoft.Data.SqlClient),

@@ -309,4 +309,22 @@ public sealed class AuthServiceTests
 
         await _refreshTokens.DidNotReceiveWithAnyArgs().RevokeFamilyAsync(default, default, default);
     }
+
+    // ---------- Current user ----------
+
+    [Fact]
+    public async Task GetCurrentUser_returns_the_user_without_password_data()
+    {
+        GivenStoredUser();
+
+        var response = await _sut.GetCurrentUserAsync(UserId, _ct);
+
+        response.ShouldBe(new UserResponse(UserId, Email, Now.UtcDateTime));
+    }
+
+    [Fact]
+    public async Task GetCurrentUser_for_a_user_that_no_longer_exists_throws_Unauthorized()
+    {
+        await Should.ThrowAsync<UnauthorizedException>(() => _sut.GetCurrentUserAsync(UserId, _ct));
+    }
 }

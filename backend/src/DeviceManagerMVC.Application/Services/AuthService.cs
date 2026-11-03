@@ -103,6 +103,10 @@ public sealed class AuthService(
         }
     }
 
+    /// <summary>Profile of the authenticated user; 401 when the account no longer exists.</summary>
+    public Task<UserResponse> GetCurrentUserAsync(int userId, CancellationToken cancellationToken) =>
+        throw new NotImplementedException();
+
     private static void ValidatePassword(string? password)
     {
         if (string.IsNullOrWhiteSpace(password))
