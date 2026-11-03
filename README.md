@@ -68,7 +68,7 @@ docker compose up -d
 ```
 
 - **`sqlserver`** starts SQL Server 2022 on `localhost:1433`.
-- **`db-init`** waits until SQL Server is healthy, runs `database/*.sql` in order (create database, tables, seed 8 devices), then exits with code 0. That `Exited (0)` status is expected.
+- **`db-init`** waits until SQL Server is healthy, runs `database/*.sql` in order (create database, tables, seed the demo user and 8 devices), then exits with code 0. That `Exited (0)` status is expected.
 
 The scripts are idempotent, so running `docker compose up -d` again is safe. Use `docker compose down -v` to delete the data.
 
@@ -76,24 +76,32 @@ The scripts are idempotent, so running `docker compose up -d` again is safe. Use
 
 The API listens on **https://localhost:7174**, and its OpenAPI document is at `/openapi/v1.json`. In Development the connection string and a development-only JWT signing key come from `appsettings.Development.json`.
 
-### 3. Create a user
+### 3. Demo credentials
 
-There is no sign-up screen, and the seed creates devices but no users, so create the first user through the API:
+The seed script creates a demo user, so you can sign in right away:
 
-```bash
-# bash / Git Bash
-curl -k -X POST https://localhost:7174/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"email":"demo@example.com","password":"Passw0rd!"}'
-```
+| Email | Password |
+|---|---|
+| `demo@devicemanager.local` | `Demo@12345` |
 
-```powershell
-# PowerShell
-Invoke-RestMethod -Method Post -Uri https://localhost:7174/api/auth/register `
-  -ContentType 'application/json' -Body '{"email":"demo@example.com","password":"Passw0rd!"}'
-```
+The seeded hash uses the same algorithm as the API (ASP.NET Core Identity's `PasswordHasher`). This account exists for local development only.
 
-You can also run **Auth → Register** from the Insomnia collection (see [Manual API testing](#manual-api-testing)). Passwords need at least 8 characters.
+> **Optional: register another user.** There is no sign-up screen, but the API has one:
+>
+> ```bash
+> # bash / Git Bash
+> curl -k -X POST https://localhost:7174/api/auth/register \
+>   -H "Content-Type: application/json" \
+>   -d '{"email":"someone@example.com","password":"Passw0rd!"}'
+> ```
+>
+> ```powershell
+> # PowerShell
+> Invoke-RestMethod -Method Post -Uri https://localhost:7174/api/auth/register `
+>   -ContentType 'application/json' -Body '{"email":"someone@example.com","password":"Passw0rd!"}'
+> ```
+>
+> You can also run **Auth → Register** from the Insomnia collection (see [Manual API testing](#manual-api-testing)). Passwords need at least 8 characters.
 
 ### 4. Frontend
 
@@ -103,7 +111,7 @@ npm install
 npm start
 ```
 
-Open **http://localhost:4200** and sign in with the user from step 3.
+Open **http://localhost:4200** and sign in with the demo credentials from step 3.
 
 The Angular dev server proxies `/api/*` to `https://localhost:7174` (`frontend/proxy.conf.json`), so the browser sees a single origin. The section [Why a dev-server proxy](#why-a-dev-server-proxy) explains why.
 
@@ -288,7 +296,7 @@ frontend/src/app/
 
 **Trade-offs taken knowingly:**
 - **No optimistic concurrency** (no `ROWVERSION`): two simultaneous edits of the same device are last-write-wins.
-- **No sign-up screen:** users are created through `POST /api/auth/register`.
+- **No sign-up screen:** the seed creates a demo user; other users are created through `POST /api/auth/register`.
 - **Refresh token lifetime** is a 7-day constant, not configuration.
 - **An access token stays valid until it expires (at most 15 minutes) after logout.** That's the usual cost of stateless JWTs, kept small by the short lifetime.
 

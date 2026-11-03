@@ -1,4 +1,4 @@
--- Seeds sample devices. Safe to run multiple times: a (Name, Brand) pair is added only if missing.
+-- Seeds a demo user and sample devices. Safe to run multiple times: rows are added only if missing.
 USE [DeviceManager];
 GO
 
@@ -6,6 +6,15 @@ SET XACT_ABORT ON;
 BEGIN TRANSACTION;
 
 DECLARE @now DATETIME2(7) = SYSUTCDATETIME();
+
+-- Demo login: demo@devicemanager.local / Demo@12345.
+-- Email is stored normalized (trimmed, lower-case); the hash is ASP.NET Core Identity's
+-- PasswordHasher v3 format (PBKDF2-HMAC-SHA512), the same one the API verifies against.
+IF NOT EXISTS (SELECT 1 FROM dbo.Users WHERE Email = N'demo@devicemanager.local')
+    INSERT INTO dbo.Users (Email, PasswordHash, CreatedAtUtc)
+    VALUES (N'demo@devicemanager.local',
+            N'AQAAAAIAAYagAAAAEMug4R2Hs0QkbJnyyMEOz78hnKi4DxCJA4nS/QBDDEJwN2CSAPy7Dj8tAdaqWVBWZA==',
+            @now);
 
 INSERT INTO dbo.Devices (Name, Brand, State, CreatedAtUtc, UpdatedAtUtc)
 SELECT s.Name, s.Brand, s.State, @now, @now
