@@ -1,7 +1,11 @@
+using System.Globalization;
 using DeviceManagerMVC.Api.Contracts;
+using DeviceManagerMVC.Application.Common;
 using DeviceManagerMVC.Application.Dtos;
 using DeviceManagerMVC.Application.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.JsonWebTokens;
 
 namespace DeviceManagerMVC.Api.Controllers;
 
@@ -19,6 +23,7 @@ public sealed class AuthController(AuthService authService) : ControllerBase
     /// <summary>
     /// Registers a new user. Returns 201 with the user; 400 for invalid input, 409 when the email is taken.
     /// </summary>
+    [AllowAnonymous]
     [HttpPost("register")]
     public async Task<ActionResult<UserResponse>> Register(RegisterRequest request, CancellationToken cancellationToken)
     {
@@ -31,6 +36,7 @@ public sealed class AuthController(AuthService authService) : ControllerBase
     /// <summary>
     /// Logs in. Returns the access token in the body and sets the refresh token cookie; 401 for invalid credentials.
     /// </summary>
+    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<ActionResult<AccessTokenResponse>> Login(LoginRequest request, CancellationToken cancellationToken) =>
         Ok(WithRefreshCookie(await authService.LoginAsync(request, cancellationToken)));
@@ -38,6 +44,7 @@ public sealed class AuthController(AuthService authService) : ControllerBase
     /// <summary>
     /// Exchanges the refresh token cookie for a new access token and a rotated cookie; 401 when it is invalid.
     /// </summary>
+    [AllowAnonymous]
     [HttpPost("refresh")]
     public async Task<ActionResult<AccessTokenResponse>> Refresh(CancellationToken cancellationToken) =>
         Ok(WithRefreshCookie(await authService.RefreshAsync(Request.Cookies[RefreshTokenCookieName], cancellationToken)));
@@ -45,6 +52,7 @@ public sealed class AuthController(AuthService authService) : ControllerBase
     /// <summary>
     /// Revokes the refresh token session and clears the cookie. Always returns 204.
     /// </summary>
+    [AllowAnonymous]
     [HttpPost("logout")]
     public async Task<IActionResult> Logout(CancellationToken cancellationToken)
     {
@@ -54,6 +62,23 @@ public sealed class AuthController(AuthService authService) : ControllerBase
         Response.Cookies.Delete(RefreshTokenCookieName, RefreshCookieOptions(expiresAtUtc: null));
 
         return NoContent();
+    }
+
+    /// <summary>
+    /// Returns the authenticated user. 401 without a valid access token or when the user no longer exists.
+    /// </summary>
+    [Authorize]
+    [HttpGet("me")]
+    public async Task<ActionResult<UserResponse>> Me(CancellationToken cancellationToken)
+    {
+        // MapInboundClaims is off (Program.cs), so the JWT's "sub" keeps its name.
+        var sub = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        if (!int.TryParse(sub, NumberStyles.None, CultureInfo.InvariantCulture, out var userId))
+        {
+            throw new UnauthorizedException("Access token has no valid subject.");
+        }
+
+        return Ok(await authService.GetCurrentUserAsync(userId, cancellationToken));
     }
 
     private AccessTokenResponse WithRefreshCookie(AuthResult result)

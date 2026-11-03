@@ -26,7 +26,11 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
-        options.Events = new JwtBearerEvents { OnChallenge = JwtBearerProblemDetails.WriteChallengeAsync });
+    {
+        // Keep JWT claim names as issued ("sub", not ClaimTypes.NameIdentifier).
+        options.MapInboundClaims = false;
+        options.Events = new JwtBearerEvents { OnChallenge = JwtBearerProblemDetails.WriteChallengeAsync };
+    });
 
 // Validates with the same JwtOptions the issuer signs with (registered by AddInfrastructure).
 builder.Services

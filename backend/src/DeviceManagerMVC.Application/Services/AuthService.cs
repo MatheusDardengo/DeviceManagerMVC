@@ -104,8 +104,13 @@ public sealed class AuthService(
     }
 
     /// <summary>Profile of the authenticated user; 401 when the account no longer exists.</summary>
-    public Task<UserResponse> GetCurrentUserAsync(int userId, CancellationToken cancellationToken) =>
-        throw new NotImplementedException();
+    public async Task<UserResponse> GetCurrentUserAsync(int userId, CancellationToken cancellationToken)
+    {
+        var user = await users.GetByIdAsync(userId, cancellationToken)
+            ?? throw new UnauthorizedException("User no longer exists.");
+
+        return new UserResponse(user.Id, user.Email, user.CreatedAtUtc);
+    }
 
     private static void ValidatePassword(string? password)
     {

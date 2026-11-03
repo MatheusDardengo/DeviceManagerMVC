@@ -151,12 +151,15 @@ Every error response is `application/problem+json` (ProblemDetails).
 
 ### Auth (`/api/auth`)
 
-| Method | Route | Success | Errors |
-|---|---|---|---|
-| POST | `/register` | 201 with the user | 400 invalid email / password under 8 characters, 409 email already registered |
-| POST | `/login` | 200 `{ accessToken, expiresAtUtc }` and sets the refresh cookie | 401 invalid credentials |
-| POST | `/refresh` | 200 with a new access token; rotates the refresh cookie | 401 missing, expired, revoked or reused token |
-| POST | `/logout` | 204; revokes the session and clears the cookie | none (always 204) |
+The public endpoints are marked `[AllowAnonymous]` explicitly; `/me` requires `[Authorize]`.
+
+| Method | Route | Auth | Success | Errors |
+|---|---|---|---|---|
+| POST | `/register` | anonymous | 201 with the user | 400 invalid email / password under 8 characters, 409 email already registered |
+| POST | `/login` | anonymous | 200 `{ accessToken, expiresAtUtc }` and sets the refresh cookie | 401 invalid credentials |
+| POST | `/refresh` | refresh cookie | 200 with a new access token; rotates the refresh cookie | 401 missing, expired, revoked or reused token |
+| POST | `/logout` | refresh cookie (optional) | 204; revokes the session and clears the cookie | none (always 204) |
+| GET | `/me` | **bearer token** | 200 `{ id, email, createdAtUtc }` of the token's user | 401 missing or invalid token, or the user no longer exists |
 
 ### Devices (`/api/devices`, bearer token required)
 
